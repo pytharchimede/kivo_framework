@@ -1,3 +1,1 @@
-<?php
-use App\View\Components\Ui;
-echo Ui::emptyState($title ?? '', $message ?? '');
+<div class="kivo-empty-state"><strong>{{ $title ?? 'Aucun élément' }}</strong><p>{{ $message ?? '' }}</p></div>

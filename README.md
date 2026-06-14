@@ -1,3 +1,49 @@
+# KIVO Framework v0.3.0
+
+Framework PHP natif ERP-first avec CLI française, moteur de vues `.ublade.php`, composants natifs enregistrés côté PHP, portail, site web, API mobile et générateurs de modules.
+
+## Démarrage débutant
+
+```powershell
+cd C:\wamp\www
+git clone https://github.com/ton-compte/kivo-framework transit_app
+cd transit_app
+php kivo installer
+php kivo verifier
+php kivo servir
+```
+
+Puis ouvre : `http://localhost:8080/login`.
+
+## Commandes utiles
+
+```powershell
+php kivo
+php kivo installer
+php kivo verifier
+php kivo cache:vider
+php kivo servir
+php kivo nouveau mon_erp
+php kivo creer:module Personnel
+php kivo creer:api Personnel
+php kivo installer:global
+```
+
+## Règle importante des vues
+
+Les fichiers `.ublade.php` ne doivent plus contenir de PHP brut `<?php ... ?>`. Utilise les directives KIVO et les composants :
+
+```html
+@extends('layouts.app')
+@section('content')
+<x-input name="email" label="Adresse email" />
+@endsection
+```
+
+Les composants natifs sont rendus par `Core\View\ComponentRegistry`, ce qui évite les anciens bugs de double ouverture `<?php`.
+
+---
+
 # KIVO Framework
 
 KIVO est un framework PHP natif orienté ERP : composants, moteur de vues, API mobile, modules métier, permissions, portail et CLI française.
@@ -24,6 +70,7 @@ Puis lancer le serveur local :
 
 ```powershell
 php kivo servir
+php kivo cache:vider
 ```
 
 Ouvre ensuite :
@@ -104,6 +151,7 @@ php kivo nouveau transitpro
 cd transitpro
 php kivo installer
 php kivo servir
+php kivo cache:vider
 ```
 
 ## Commandes principales
@@ -114,6 +162,7 @@ php kivo installer
 php kivo installer:global
 php kivo nouveau mon_erp
 php kivo servir
+php kivo cache:vider
 php kivo creer:module Personnel
 php kivo creer:api Personnel
 php kivo creer:composant select-search
@@ -136,3 +185,23 @@ php kivo make:component select-search
 ## Vision
 
 KIVO vise à générer des ERP complets à partir de modules natifs : RH, utilisateurs, permissions, tickets, CRM, finance, documents, logistique, transit, site web et API mobile.
+
+
+## Correctif v0.3.1 - stabilité composants
+
+Cette version corrige une boucle infinie possible dans `ComponentRegistry` lorsque des alias de composants normalisés écrasaient les composants natifs.
+
+Commandes de contrôle :
+
+```powershell
+php kivo cache:vider
+php kivo verifier
+php kivo servir
+```
+
+Routes à vérifier après démarrage :
+
+```txt
+http://localhost:8080/login
+http://localhost:8080/portal
+```

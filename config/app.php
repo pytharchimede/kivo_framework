@@ -1,8 +1,8 @@
 <?php
 return [
-    'name' => 'AMANI Framework',
+    'name' => 'KIVO Framework',
     'author' => 'Yao Ulrich AMANI',
     'country' => 'Côte d’Ivoire',
-    'version' => '0.1.0',
+    'version' => '0.2.3',
     'template' => 'enterprise',
 ];

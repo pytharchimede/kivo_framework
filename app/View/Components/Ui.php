@@ -25,8 +25,8 @@ final class Ui
             $subtitle = $subtitleOrOptions;
         }
 
-        $class = Html::classes(['amani-page-header', (string) ($attrs['class'] ?? '')]);
-        $eyebrowHtml = $eyebrow !== '' ? '<p class="amani-eyebrow">' . View::e($eyebrow) . '</p>' : '';
+        $class = Html::classes(['kivo-page-header', (string) ($attrs['class'] ?? '')]);
+        $eyebrowHtml = $eyebrow !== '' ? '<p class="kivo-eyebrow">' . View::e($eyebrow) . '</p>' : '';
 
         return '<section class="' . View::e($class) . '"><div>' . $eyebrowHtml . '<h1>' . View::e($title) . '</h1>'
             . ($subtitle !== '' ? '<p>' . View::e($subtitle) . '</p>' : '')
@@ -36,8 +36,8 @@ final class Ui
     /** @param array<string,mixed> $attrs */
     public static function section(string $title, string $content, string $subtitle = '', array $attrs = []): string
     {
-        $class = Html::classes(['amani-section-card', (string) ($attrs['class'] ?? '')]);
-        return '<section class="' . View::e($class) . '"><div class="amani-section-heading"><h2 class="amani-section-title">' . View::e($title) . '</h2>'
+        $class = Html::classes(['kivo-section-card', (string) ($attrs['class'] ?? '')]);
+        return '<section class="' . View::e($class) . '"><div class="kivo-section-heading"><h2 class="kivo-section-title">' . View::e($title) . '</h2>'
             . ($subtitle !== '' ? '<span>' . View::e($subtitle) . '</span>' : '')
             . '</div>' . $content . '</section>';
     }
@@ -61,7 +61,7 @@ final class Ui
         }
 
         $safeVariant = preg_replace('/[^a-z0-9_-]/i', '', $variant) ?: 'primary';
-        $class = 'amani-action-btn amani-action-btn--' . $safeVariant;
+        $class = 'kivo-action-btn kivo-action-btn--' . $safeVariant;
         if ($href !== '') {
             return '<a class="' . View::e($class) . '" href="/' . View::e(ltrim($href, '/')) . '">' . View::e($label) . '</a>';
         }
@@ -70,11 +70,11 @@ final class Ui
 
     public static function badge(string $label, string $tone = 'neutral'): string
     {
-        return '<span class="amani-badge amani-badge--' . View::e($tone) . '">' . View::e($label) . '</span>';
+        return '<span class="kivo-badge kivo-badge--' . View::e($tone) . '">' . View::e($label) . '</span>';
     }
 
     public static function emptyState(string $title, string $message = ''): string
     {
-        return '<div class="amani-empty-state"><strong>' . View::e($title) . '</strong>' . ($message !== '' ? '<p>' . View::e($message) . '</p>' : '') . '</div>';
+        return '<div class="kivo-empty-state"><strong>' . View::e($title) . '</strong>' . ($message !== '' ? '<p>' . View::e($message) . '</p>' : '') . '</div>';
     }
 }

@@ -1,3 +1,1 @@
-<?php
-use App\View\Components\Form;
-echo Form::dropzone($name ?? '', $label ?? 'Fichier', $attrs ?? []);
+<label class="kivo-dropzone">{{ $label ?? 'Fichier' }}</label>

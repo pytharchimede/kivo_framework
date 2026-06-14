@@ -1,3 +1,1 @@
-<?php
-use App\View\Components\Ui;
-echo Ui::button($label ?? '', $href ?? '', $variant ?? 'primary', $type ?? 'button');
+<button class="kivo-action-btn" type="{{ $type ?? 'button' }}">{{ $label ?? 'Bouton' }}</button>

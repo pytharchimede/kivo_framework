@@ -1,8 +1,9 @@
 @extends('layouts.app')
 @section('content')
-<section class="amani-card">
-  <h1>Site web généré par AMANI Framework</h1>
+<section class="kivo-card">
+  <h1>Site web généré par KIVO Framework</h1>
   <p>Cette base peut être remplacée par un template transit, médical, école, CRM ou entreprise.</p>
-  <a class="amani-btn amani-btn-accent" href="/portal">Accéder au portail ERP</a>
+  <a class="kivo-btn kivo-btn-accent" href="/login">Se connecter</a>
+  <a class="kivo-btn" href="/portal">Accéder au portail ERP</a>
 </section>
 @endsection

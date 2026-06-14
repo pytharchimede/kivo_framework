@@ -1,3 +1,1 @@
-<?php
-use App\View\Components\Ui;
-echo Ui::section($title ?? '', $content ?? '', $subtitle ?? '', $attrs ?? []);
+<section class="kivo-section-card"><h2>{{ $title ?? 'Section' }}</h2>{!! $content ?? '' !!}</section>

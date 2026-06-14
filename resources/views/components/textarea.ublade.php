@@ -1,3 +1,1 @@
-<?php
-use App\View\Components\Form;
-echo Form::textarea($name ?? '', $label ?? '', $value ?? '', $attrs ?? []);
+<textarea class="kivo-input kivo-textarea" name="{{ $name ?? '' }}">{{ $value ?? '' }}</textarea>

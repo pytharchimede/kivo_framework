@@ -4,6 +4,8 @@ namespace Core\Console;
 
 use PDO;
 use Throwable;
+use Core\View\Compiler;
+use Core\View\View;
 
 final class Application
 {
@@ -26,6 +28,8 @@ final class Application
             'installer:global', 'global:install' => $this->installGlobal(),
             'nouveau', 'new' => $this->newProject($arg),
             'servir', 'serve' => $this->serve($arg),
+            'cache:vider', 'cache:clear' => $this->clearCache(),
+            'verifier', 'check' => $this->verify(),
             'creer:module', 'make:module' => $this->makeModule($arg),
             'creer:api', 'make:api' => $this->makeApi($arg),
             'creer:component', 'creer:composant', 'make:component' => $this->makeComponent($arg),
@@ -57,6 +61,7 @@ final class Application
         $this->line('  php kivo creer:api Personnel');
         $this->line('  php kivo creer:composant select-search');
         $this->line('  php kivo lister:modules');
+        $this->line('  php kivo verifier');
         $this->line('');
         $this->line('Alias anglais : help, install, global:install, new, serve, make:module, make:api, make:component.');
         return 0;
@@ -184,9 +189,78 @@ final class Application
             $this->error('Dossier public introuvable.');
             return 1;
         }
+        $this->clearCache(false);
         $this->line("Serveur KIVO : http://localhost:{$port}");
         $this->line('Arrêt : Ctrl+C');
         passthru(PHP_BINARY . ' -S localhost:' . escapeshellarg($port) . ' -t ' . escapeshellarg($public));
+        return 0;
+    }
+
+
+    private function clearCache(bool $verbose = true): int
+    {
+        $dir = $this->basePath . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'framework' . DIRECTORY_SEPARATOR . 'views';
+        if (! is_dir($dir)) {
+            if ($verbose) {
+                $this->line('✓ Aucun cache de vues à vider.');
+            }
+            return 0;
+        }
+        $count = 0;
+        foreach (glob($dir . DIRECTORY_SEPARATOR . '*.php') ?: [] as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+                $count++;
+            }
+        }
+        if ($verbose) {
+            $this->line("✓ Cache des vues vidé ({$count} fichier(s)).");
+        }
+        return 0;
+    }
+
+    private function verify(): int
+    {
+        $this->line('Vérification KIVO');
+        $this->line('-----------------');
+
+        $errors = 0;
+        foreach ($this->phpFiles() as $file) {
+            $result = $this->lintFile($file);
+            if ($result !== true) {
+                $errors++;
+                $this->error('✗ PHP invalide : ' . $this->relativePath($file));
+                $this->error($result);
+            }
+        }
+
+        foreach ($this->viewFiles() as $file) {
+            try {
+                $compiled = Compiler::compile((string) file_get_contents($file));
+                $tmp = $this->basePath . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'framework' . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'verify_' . md5($file) . '.php';
+                $this->writeRaw($tmp, $compiled);
+                $result = $this->lintFile($tmp);
+                @unlink($tmp);
+                if ($result !== true) {
+                    $errors++;
+                    $this->error('✗ Vue invalide : ' . $this->relativePath($file));
+                    $this->error($result);
+                }
+            } catch (Throwable $e) {
+                $errors++;
+                $this->error('✗ Vue invalide : ' . $this->relativePath($file));
+                $this->error($e->getMessage());
+            }
+        }
+
+        if ($errors > 0) {
+            $this->error("{$errors} erreur(s) détectée(s).");
+            return 1;
+        }
+
+        $this->line('✓ Fichiers PHP valides');
+        $this->line('✓ Vues .ublade.php compilables');
+        $this->line('✓ Composants natifs enregistrés via ComponentRegistry');
         return 0;
     }
 
@@ -472,6 +546,56 @@ final class Application
             $dst = $target . DIRECTORY_SEPARATOR . $item;
             is_dir($src) ? $this->copyDirectory($src, $dst, $ignore) : copy($src, $dst);
         }
+    }
+
+
+    /** @return array<int,string> */
+    private function phpFiles(): array
+    {
+        $roots = ['app', 'core', 'routes', 'config'];
+        $files = [];
+        foreach ($roots as $root) {
+            $dir = $this->basePath . DIRECTORY_SEPARATOR . $root;
+            if (! is_dir($dir)) {
+                continue;
+            }
+            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir));
+            foreach ($iterator as $file) {
+                if ($file->isFile() && str_ends_with($file->getFilename(), '.php')) {
+                    $files[] = $file->getPathname();
+                }
+            }
+        }
+        return $files;
+    }
+
+    /** @return array<int,string> */
+    private function viewFiles(): array
+    {
+        $dir = $this->basePath . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views';
+        if (! is_dir($dir)) {
+            return [];
+        }
+        $files = [];
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir));
+        foreach ($iterator as $file) {
+            if ($file->isFile() && str_ends_with($file->getFilename(), '.ublade.php')) {
+                $files[] = $file->getPathname();
+            }
+        }
+        return $files;
+    }
+
+    private function lintFile(string $file): true|string
+    {
+        $cmd = escapeshellarg(PHP_BINARY) . ' -l ' . escapeshellarg($file) . ' 2>&1';
+        exec($cmd, $output, $code);
+        return $code === 0 ? true : implode(PHP_EOL, $output);
+    }
+
+    private function relativePath(string $file): string
+    {
+        return ltrim(str_replace($this->basePath, '', $file), DIRECTORY_SEPARATOR);
     }
 
     private function unknown(string $command): int

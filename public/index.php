@@ -2,6 +2,10 @@
 
 define('BASE_PATH', dirname(__DIR__));
 
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 $autoload = BASE_PATH . '/vendor/autoload.php';
 if (is_file($autoload)) {
     require $autoload;

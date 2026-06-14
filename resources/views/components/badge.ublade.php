@@ -1,3 +1,1 @@
-<?php
-use App\View\Components\Ui;
-echo Ui::badge($label ?? '', $tone ?? 'neutral');
+<span class="kivo-badge">{{ $label ?? 'Badge' }}</span>

@@ -1,3 +1,1 @@
-<?php
-use App\View\Components\Form;
-echo Form::select($name ?? '', $label ?? '', $options ?? [], $selected ?? null, $attrs ?? []);
+<select class="kivo-select" name="{{ $name ?? '' }}"></select>
