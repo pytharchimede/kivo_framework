@@ -1,6 +1,6 @@
 # Spécification ERP Starter
 
-Une application créée avec KIVO Framework doit pouvoir démarrer avec une base ERP directement exploitable.
+Une application créée avec AMANI Framework doit pouvoir démarrer avec une base ERP directement exploitable.
 
 ## Modules installés par défaut
 

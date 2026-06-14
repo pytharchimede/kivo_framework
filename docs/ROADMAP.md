@@ -1,4 +1,4 @@
-# Roadmap KIVO Framework
+# Roadmap AMANI Framework
 
 ## v0.1.0 — Noyau
 
@@ -7,7 +7,7 @@
 - JsonResponse
 - Moteur de vues `.ublade.php`
 - Composants `<x-*>`
-- CLI `php bin/kivo`
+- CLI `php bin/amani`
 - Logo et charte de base
 
 ## v0.2.0 — ERP Starter

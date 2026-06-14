@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ $title ?? config('app.name', 'AMANI Framework') }}</title>
+  <title><?= \Core\View\View::e($title ?? config('app.name', 'AMANI Framework')) ?></title>
   <link rel="stylesheet" href="/assets/css/amani.css">
 </head>
 <body>
@@ -14,8 +14,8 @@
     </div>
   </header>
   <main class="amani-container">
-    @yield('content')
+    <?= $__sections["content"] ?? "" ?>
   </main>
-  <script src="/assets/js/amani-components.js"></script>
 </body>
 </html>
+<?php if(isset($__layout)){ echo \Core\View\View::renderLayout($__layout, get_defined_vars()); } ?>

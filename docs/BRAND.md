@@ -1,20 +1,20 @@
-# Identité KIVO Framework
+# Identité AMANI Framework
 
 ## Nom
 
-**KIVO Framework**
+**AMANI Framework**
 
-Nom complet recommandé : **KIVO ERP Application Framework**.
+Nom complet recommandé : **AMANI ERP Application Framework**.
 
 ## Origine
 
-Le nom vient de **Yao Ulrich KIVO**, créateur ivoirien du framework.
+Le nom vient de **Yao Ulrich AMANI**, créateur ivoirien du framework.
 
 Le nom est court, professionnel et peut fonctionner localement comme à l'international.
 
 ## Positionnement
 
-KIVO Framework est un framework PHP natif **ERP-first** : il ne sert pas seulement à créer des pages, il sert à générer des applications métiers complètes.
+AMANI Framework est un framework PHP natif **ERP-first** : il ne sert pas seulement à créer des pages, il sert à générer des applications métiers complètes.
 
 ## Palette
 

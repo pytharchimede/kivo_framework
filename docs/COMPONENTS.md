@@ -1,6 +1,6 @@
-# KIVO Components
+# AMANI Components
 
-KIVO Framework intègre deux formes de composants.
+AMANI Framework intègre deux formes de composants.
 
 ## 1. Composants PHP natifs
 
@@ -45,4 +45,4 @@ echo Form::dropzone('photo', 'Photo du personnel', ['accept' => 'image/*']);
 - `Ui::badge()`
 - `Ui::emptyState()`
 
-Les composants utilisent le préfixe CSS `kivo-*` et le script `/assets/js/kivo-components.js`.
+Les composants utilisent le préfixe CSS `amani-*` et le script `/assets/js/amani-components.js`.

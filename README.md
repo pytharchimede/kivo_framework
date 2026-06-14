@@ -1,71 +1,68 @@
 # KIVO Framework
 
-**KIVO Framework** est un framework PHP natif orienté ERP, créé par **Yao Ulrich AMANI** en Côte d’Ivoire.
+Framework PHP natif orienté ERP : composants, moteur de vues, API mobile, modules métier et CLI française.
 
-Objectif : faciliter fortement la création d'applications métier, ERP, CRM, portails, sites web et API mobiles, avec une logique proche des frameworks classiques mais orientée modules métier.
+## Démarrage sous Windows/WAMP
 
-## Ce que KIVO doit générer
+À la racine du projet :
 
-- Socle ERP complet : utilisateurs, permissions, RH, portail, site web.
-- Modules natifs : tickets, CRM, finance, logistique, colisage, transit, documentation, formation, etc.
-- API mobile JSON générée automatiquement.
-- Vues `.ublade.php` avec moteur de vue natif type Blade.
-- Composants UI réutilisables.
-- Templates applicatifs : enterprise, transit, BTP, médical, école, CRM.
-- À terme : interface graphique no-code/low-code.
-
-## Installation locale
-
-```bash
-composer dump-autoload
-php -S localhost:8080 -t public
+```powershell
+php kivo aide
+php kivo installer
 ```
 
-## CLI française
+Alternative :
 
-```bash
-php bin/kivo creer:module Personnel
-php bin/kivo creer:api Personnel
-php bin/kivo creer:composant select-search
-php bin/kivo installer:erp
-php bin/kivo installer:module rh
-php bin/kivo lister:modules
+```powershell
+php bin/kivo.php installer
+bin\kivo.bat installer
+```
+
+La commande `kivo installer` seule ne fonctionne que si `bin/` est ajouté au PATH Windows.
+
+## Installation
+
+```powershell
+php kivo installer
+```
+
+L'assistant crée automatiquement :
+
+- `.env` depuis `.env.example` ;
+- `APP_KEY` ;
+- dossiers `storage/` ;
+- base MySQL si l'utilisateur possède le droit `CREATE DATABASE` ;
+- tables noyau via migrations SQL.
+
+Sur cPanel/hébergement mutualisé, crée d'abord la base dans cPanel/phpMyAdmin, puis renseigne les accès dans l'assistant.
+
+## Commandes
+
+```powershell
+php kivo creer:module Personnel
+php kivo creer:api Personnel
+php kivo creer:composant select-search
+php kivo lister:modules
+php kivo nouveau mon_erp
 ```
 
 Alias anglais disponibles :
 
-```bash
-php bin/kivo make:module Personnel
-php bin/kivo install:module tickets
+```powershell
+php kivo make:module Personnel
+php kivo make:api Personnel
+php kivo make:component select-search
+php kivo new mon_erp
 ```
 
-## Exemple de vue
+## Lancer le serveur local
 
-```php
-@extends('layouts.app')
-
-@section('content')
-<x-page-header title="Utilisateurs" subtitle="Gestion des comptes et accès" />
-<x-select-search name="service_id" label="Service" placeholder="Rechercher un service" />
-@endsection
+```powershell
+php -S localhost:8080 -t public
 ```
 
-## Exemple API
+Puis ouvrir : `http://localhost:8080`.
 
-```php
-$router->apiResource('users', UserApiController::class);
-```
+## Vision
 
-Endpoints générés :
-
-```txt
-GET    /api/users
-POST   /api/users
-GET    /api/users/{id}
-POST   /api/users/{id}
-POST   /api/users/{id}/delete
-```
-
-## Philosophie
-
-KIVO n’est pas un simple mini-Laravel. C’est un **ERP Application Framework** : il génère une base métier complète, puis permet de créer des modules, des API mobiles et des interfaces propres avec très peu de code.
+KIVO vise à générer des ERP complets à partir de modules natifs : RH, utilisateurs, permissions, tickets, CRM, finance, documents, logistique, transit, site web et API mobile.

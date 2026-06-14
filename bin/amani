@@ -1,0 +1,69 @@
+#!/usr/bin/env php
+<?php
+
+$command = $argv[1] ?? null;
+$name = $argv[2] ?? null;
+$base = dirname(__DIR__);
+
+function studly(string $name): string
+{
+    return str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $name)));
+}
+
+function table_name(string $name): string
+{
+    return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', studly($name))) . 's';
+}
+
+if (! $command) {
+    echo "AMANI Framework CLI\n";
+    echo "Usage:\n";
+    echo "  php bin/amani make:module Personnel\n";
+    echo "  php bin/amani make:api Personnel\n";
+    echo "  php bin/amani make:component select-search\n";
+    exit(0);
+}
+
+if (in_array($command, ['make:module', 'make:api'], true)) {
+    if (! $name) {
+        echo "Nom requis. Exemple: php bin/amani {$command} Personnel\n";
+        exit(1);
+    }
+    $studly = studly($name);
+    $table = table_name($studly);
+
+    @mkdir("$base/app/Controllers", 0777, true);
+    @mkdir("$base/app/Repositories", 0777, true);
+    @mkdir("$base/app/Http/Resources", 0777, true);
+    @mkdir("$base/resources/views/" . strtolower($studly), 0777, true);
+
+    file_put_contents("$base/app/Controllers/{$studly}ApiController.php", "<?php\nnamespace App\\Controllers;\n\nuse Core\\Api\\ApiController;\nuse App\\Repositories\\{$studly}Repository;\nuse App\\Http\\Resources\\{$studly}Resource;\n\nfinal class {$studly}ApiController extends ApiController\n{\n    protected string \\$repository = {$studly}Repository::class;\n    protected string \\$resource = {$studly}Resource::class;\n}\n");
+
+    file_put_contents("$base/app/Repositories/{$studly}Repository.php", "<?php\nnamespace App\\Repositories;\n\nuse Core\\Database\\Repository;\n\nfinal class {$studly}Repository extends Repository\n{\n    protected string \\$table = '{$table}';\n}\n");
+
+    file_put_contents("$base/app/Http/Resources/{$studly}Resource.php", "<?php\nnamespace App\\Http\\Resources;\n\nfinal class {$studly}Resource\n{\n    public static function make(array \\$row): array\n    {\n        return \\$row;\n    }\n}\n");
+
+    if ($command === 'make:module') {
+        file_put_contents("$base/app/Controllers/{$studly}Controller.php", "<?php\nnamespace App\\Controllers;\n\nuse Core\\Http\\Controller;\n\nfinal class {$studly}Controller extends Controller\n{\n    public function index(): string\n    {\n        return \\$this->view('" . strtolower($studly) . ".index', ['title' => '{$studly}']);\n    }\n}\n");
+        file_put_contents("$base/resources/views/" . strtolower($studly) . "/index.ublade.php", "@extends('layouts.app')\n@section('content')\n<x-page-header title=\"{$studly}\" subtitle=\"Module généré par AMANI Framework.\" />\n<section class=\"amani-card\">\n  <p>Module {$studly} prêt à personnaliser.</p>\n</section>\n@endsection\n");
+    }
+
+    echo "{$command} terminé pour {$studly}.\n";
+    echo "Ajoute dans routes/api.php : \\$router->apiResource('{$table}', App\\Controllers\\{$studly}ApiController::class);\n";
+    exit(0);
+}
+
+if ($command === 'make:component') {
+    if (! $name) {
+        echo "Nom requis. Exemple: php bin/amani make:component select-search\n";
+        exit(1);
+    }
+    $file = str_replace('-', '_', strtolower($name));
+    @mkdir("$base/resources/views/components", 0777, true);
+    file_put_contents("$base/resources/views/components/{$file}.ublade.php", "<div class=\"amani-card\" data-component=\"{$name}\">\n  <strong>{{ \\$title ?? '{$name}' }}</strong>\n</div>\n");
+    echo "Composant {$name} créé : resources/views/components/{$file}.ublade.php\n";
+    exit(0);
+}
+
+echo "Commande inconnue: {$command}\n";
+exit(1);

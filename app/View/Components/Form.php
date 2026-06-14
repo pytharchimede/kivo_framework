@@ -11,10 +11,10 @@ final class Form
     /** @param array<string,mixed> $attrs */
     public static function field(string $label, string $control, array $attrs = []): string
     {
-        $class = Html::classes(['kivo-field', (string) ($attrs['fieldClass'] ?? $attrs['class'] ?? '')]);
-        $hint = isset($attrs['hint']) ? '<small class="kivo-field-hint">' . View::e((string) $attrs['hint']) . '</small>' : '';
-        $error = isset($attrs['error']) ? '<small class="kivo-field-error">' . View::e((string) $attrs['error']) . '</small>' : '';
-        $required = !empty($attrs['required']) ? ' <span class="kivo-required">*</span>' : '';
+        $class = Html::classes(['amani-field', (string) ($attrs['fieldClass'] ?? $attrs['class'] ?? '')]);
+        $hint = isset($attrs['hint']) ? '<small class="amani-field-hint">' . View::e((string) $attrs['hint']) . '</small>' : '';
+        $error = isset($attrs['error']) ? '<small class="amani-field-error">' . View::e((string) $attrs['error']) . '</small>' : '';
+        $required = !empty($attrs['required']) ? ' <span class="amani-required">*</span>' : '';
         $id = isset($attrs['for']) ? ' for="' . View::e((string) $attrs['for']) . '"' : '';
 
         return '<div class="' . View::e($class) . '"><label' . $id . '>' . View::e($label) . $required . '</label>' . $control . $hint . $error . '</div>';
@@ -31,7 +31,7 @@ final class Form
         $id = (string) ($attrs['id'] ?? self::id($name));
 
         $inputAttrs = array_merge([
-            'class' => Html::classes(['kivo-input', (string) ($attrs['class'] ?? '')]),
+            'class' => Html::classes(['amani-input', (string) ($attrs['class'] ?? '')]),
             'type' => $type,
             'name' => $name,
             'id' => $id,
@@ -50,7 +50,7 @@ final class Form
         $id = (string) ($attrs['id'] ?? self::id($name));
 
         $textareaAttrs = array_merge([
-            'class' => Html::classes(['kivo-textarea', 'kivo-input', (string) ($attrs['class'] ?? '')]),
+            'class' => Html::classes(['amani-textarea', 'amani-input', (string) ($attrs['class'] ?? '')]),
             'name' => $name,
             'id' => $id,
             'rows' => $attrs['rows'] ?? 4,
@@ -68,7 +68,7 @@ final class Form
         $id = (string) ($attrs['id'] ?? self::id($name));
 
         $selectAttrs = array_merge([
-            'class' => Html::classes(['kivo-select', (string) ($attrs['class'] ?? '')]),
+            'class' => Html::classes(['amani-select', (string) ($attrs['class'] ?? '')]),
             'name' => $name,
             'id' => $id,
         ], $attrs);
@@ -89,10 +89,10 @@ final class Form
         unset($attrs['placeholder']);
 
         $selectAttrs = array_merge([
-            'class' => Html::classes(['kivo-native-select', 'kivo-select-search-source', (string) ($attrs['class'] ?? '')]),
+            'class' => Html::classes(['amani-native-select', 'amani-select-search-source', (string) ($attrs['class'] ?? '')]),
             'name' => $selectName,
             'id' => $id,
-            'data-kivo-select-search' => '1',
+            'data-amani-select-search' => '1',
             'data-placeholder' => $placeholder,
             'style' => 'position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;overflow:hidden!important;',
             'tabindex' => '-1',
@@ -123,7 +123,7 @@ final class Form
         $fieldAttrs = self::extractFieldAttrs($attrs);
         $id = (string) ($attrs['id'] ?? self::id($name));
         $inputAttrs = array_merge([
-            'class' => Html::classes(['kivo-checkbox-input', (string) ($attrs['class'] ?? '')]),
+            'class' => Html::classes(['amani-checkbox-input', (string) ($attrs['class'] ?? '')]),
             'type' => 'checkbox',
             'name' => $name,
             'id' => $id,
@@ -131,7 +131,7 @@ final class Form
             'checked' => $checked,
         ], $attrs);
 
-        return '<div class="' . View::e(Html::classes(['kivo-field', 'kivo-check-field', (string) ($fieldAttrs['fieldClass'] ?? '')])) . '"><label class="kivo-checkbox" for="' . View::e($id) . '"><input' . Html::attrs($inputAttrs) . '><span>' . View::e($label) . '</span></label></div>';
+        return '<div class="' . View::e(Html::classes(['amani-field', 'amani-check-field', (string) ($fieldAttrs['fieldClass'] ?? '')])) . '"><label class="amani-checkbox" for="' . View::e($id) . '"><input' . Html::attrs($inputAttrs) . '><span>' . View::e($label) . '</span></label></div>';
     }
 
     /** @param array<string,mixed> $attrs */
@@ -150,12 +150,12 @@ final class Form
         $multiple = !empty($attrs['multiple']);
         $inputName = $multiple && !str_ends_with($name, '[]') ? $name . '[]' : $name;
 
-        return '<label class="kivo-dropzone ' . View::e((string) ($attrs['class'] ?? '')) . '" data-kivo-dropzone>'
+        return '<label class="amani-dropzone ' . View::e((string) ($attrs['class'] ?? '')) . '" data-amani-dropzone>'
             . '<input' . Html::attrs(['type' => 'file', 'name' => $inputName, 'accept' => $accept, 'required' => $required, 'multiple' => $multiple]) . '>'
-            . '<span class="kivo-dropzone-icon">⇪</span>'
+            . '<span class="amani-dropzone-icon">⇪</span>'
             . '<strong>' . View::e($label) . '</strong>'
             . '<span>' . View::e($hint) . '</span>'
-            . '<div class="kivo-file-preview" data-kivo-file-preview>' . View::e($preview) . '</div>'
+            . '<div class="amani-file-preview" data-amani-file-preview>' . View::e($preview) . '</div>'
             . '</label>';
     }
 

@@ -1,0 +1,9 @@
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="420" height="120" rx="24" fill="#0F1B3D"/>
+  <path d="M58 86L93 26L128 86H108L100 72H86L78 86H58Z" fill="#FABD02"/>
+  <path d="M93 44L80 66H106L93 44Z" fill="#0F1B3D"/>
+  <path d="M142 86V34H156L174 60L192 34H206V86H190V60L177 79H171L158 60V86H142Z" fill="white"/>
+  <path d="M220 86L250 34H266L296 86H278L273 76H243L238 86H220ZM250 62H266L258 48L250 62Z" fill="white"/>
+  <path d="M309 86V34H324L350 60V34H367V86H352L326 60V86H309Z" fill="white"/>
+  <text x="142" y="106" font-family="Arial, sans-serif" font-size="13" letter-spacing="4" fill="#FABD02">ERP APPLICATION FRAMEWORK</text>
+</svg>
