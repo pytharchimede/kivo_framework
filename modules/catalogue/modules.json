@@ -1,0 +1,58 @@
+{
+  "rh": {
+    "label": "Ressources Humaines",
+    "description": "Personnel, services, fonctions, présences et documents RH.",
+    "entities": ["Personnel", "Service", "Fonction", "Presence", "DocumentRh"],
+    "depends": ["utilisateurs", "permissions"],
+    "events": ["personnel.created", "presence.recorded"]
+  },
+  "utilisateurs": {
+    "label": "Utilisateurs",
+    "description": "Comptes, profils, sessions et préférences utilisateur.",
+    "entities": ["User", "UserProfile", "UserSession"],
+    "depends": [],
+    "events": ["user.created", "user.disabled"]
+  },
+  "permissions": {
+    "label": "Permissions",
+    "description": "Rôles, droits, matrice ACL et audit d'accès.",
+    "entities": ["Role", "Permission", "RolePermission", "AccessLog"],
+    "depends": ["utilisateurs"],
+    "events": ["permission.changed"]
+  },
+  "tickets": {
+    "label": "Centre de services / Tickets",
+    "description": "Tickets, SLA, destinataires, pièces jointes, relances et suivi de lecture.",
+    "entities": ["Ticket", "TicketMessage", "TicketAttachment", "TicketRecipient"],
+    "depends": ["utilisateurs", "permissions"],
+    "events": ["ticket.created", "ticket.assigned", "ticket.closed"]
+  },
+  "crm": {
+    "label": "CRM",
+    "description": "Clients, prospects, pipeline, opportunités et relances.",
+    "entities": ["Client", "Prospect", "Opportunite", "Relance"],
+    "depends": ["utilisateurs"],
+    "events": ["lead.created", "opportunity.won"]
+  },
+  "finance": {
+    "label": "Finance",
+    "description": "Décaissements, factures, budgets, validations et exports.",
+    "entities": ["Decaissement", "Facture", "Budget", "Validation"],
+    "depends": ["utilisateurs", "permissions"],
+    "events": ["payment.requested", "payment.approved"]
+  },
+  "logistique": {
+    "label": "Logistique",
+    "description": "Véhicules, chauffeurs, missions, maintenance, carburant et planning.",
+    "entities": ["Vehicule", "Chauffeur", "Mission", "Maintenance", "Carburant"],
+    "depends": ["rh"],
+    "events": ["mission.created", "maintenance.due"]
+  },
+  "site": {
+    "label": "Site web",
+    "description": "Site public modifiable, pages, articles et messages de contact.",
+    "entities": ["Page", "Article", "ContactMessage"],
+    "depends": [],
+    "events": ["contact.received"]
+  }
+}

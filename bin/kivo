@@ -1,0 +1,152 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$command = $argv[1] ?? null;
+$name = $argv[2] ?? null;
+$base = dirname(__DIR__);
+
+function kivo_studly(string $name): string
+{
+    return str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $name)));
+}
+
+function kivo_slug(string $name): string
+{
+    $slug = strtolower(preg_replace('/(?<!^)[A-Z]/', '-$0', kivo_studly($name)) ?? $name);
+    return str_replace('_', '-', trim($slug, '-'));
+}
+
+function kivo_table(string $name): string
+{
+    return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', kivo_studly($name)) ?? $name) . 's';
+}
+
+function kivo_write(string $path, string $content): void
+{
+    @mkdir(dirname($path), 0777, true);
+    if (is_file($path)) {
+        echo "Déjà présent : {$path}\n";
+        return;
+    }
+    file_put_contents($path, $content);
+    echo "Créé : {$path}\n";
+}
+
+function kivo_help(): void
+{
+    echo "KIVO Framework CLI\n\n";
+    echo "Commandes françaises :\n";
+    echo "  php bin/kivo creer:module Personnel\n";
+    echo "  php bin/kivo creer:api Personnel\n";
+    echo "  php bin/kivo creer:composant select-search\n";
+    echo "  php bin/kivo installer:erp\n";
+    echo "  php bin/kivo installer:module rh\n";
+    echo "  php bin/kivo lister:modules\n\n";
+    echo "Alias anglais acceptés : make:module, make:api, make:component, install:erp, install:module, list:modules\n";
+}
+
+$aliases = [
+    'make:module' => 'creer:module',
+    'make:api' => 'creer:api',
+    'make:component' => 'creer:composant',
+    'install:erp' => 'installer:erp',
+    'install:module' => 'installer:module',
+    'list:modules' => 'lister:modules',
+];
+$command = $aliases[$command] ?? $command;
+
+if (!$command || in_array($command, ['aide', 'help', '--help', '-h'], true)) {
+    kivo_help();
+    exit(0);
+}
+
+$nativeModules = [
+    'rh' => ['label' => 'Ressources Humaines', 'entities' => ['Personnel', 'Service', 'Fonction', 'Presence', 'DocumentRh']],
+    'utilisateurs' => ['label' => 'Utilisateurs', 'entities' => ['User', 'Role', 'Permission']],
+    'permissions' => ['label' => 'Permissions', 'entities' => ['Role', 'Permission']],
+    'tickets' => ['label' => 'Centre de services / Tickets', 'entities' => ['Ticket', 'TicketMessage', 'TicketAttachment']],
+    'crm' => ['label' => 'CRM', 'entities' => ['Client', 'Prospect', 'Opportunite', 'Relance']],
+    'finance' => ['label' => 'Finance', 'entities' => ['Decaissement', 'Facture', 'Budget']],
+    'logistique' => ['label' => 'Logistique', 'entities' => ['Vehicule', 'Chauffeur', 'Mission', 'Maintenance']],
+    'colisage' => ['label' => 'Colisage', 'entities' => ['Colis', 'Expedition', 'Tracking']],
+    'site' => ['label' => 'Site web', 'entities' => ['Page', 'Article', 'ContactMessage']],
+];
+
+if ($command === 'lister:modules') {
+    echo "Modules natifs disponibles :\n";
+    foreach ($nativeModules as $key => $module) {
+        echo "  - {$key} : {$module['label']}\n";
+    }
+    exit(0);
+}
+
+if (in_array($command, ['creer:module', 'creer:api'], true)) {
+    if (!$name) {
+        echo "Nom requis. Exemple : php bin/kivo {$command} Personnel\n";
+        exit(1);
+    }
+    $studly = kivo_studly($name);
+    $slug = kivo_slug($studly);
+    $table = kivo_table($studly);
+    $viewDir = strtolower($studly);
+
+    kivo_write("$base/app/Controllers/{$studly}ApiController.php", "<?php\nnamespace App\\Controllers;\n\nuse Core\\Api\\ApiController;\nuse App\\Repositories\\{$studly}Repository;\nuse App\\Http\\Resources\\{$studly}Resource;\n\nfinal class {$studly}ApiController extends ApiController\n{\n    protected string \\$repository = {$studly}Repository::class;\n    protected string \\$resource = {$studly}Resource::class;\n}\n");
+
+    kivo_write("$base/app/Repositories/{$studly}Repository.php", "<?php\nnamespace App\\Repositories;\n\nuse Core\\Database\\Repository;\n\nfinal class {$studly}Repository extends Repository\n{\n    protected string \\$table = '{$table}';\n}\n");
+
+    kivo_write("$base/app/Http/Resources/{$studly}Resource.php", "<?php\nnamespace App\\Http\\Resources;\n\nfinal class {$studly}Resource\n{\n    public static function make(array \\$row): array\n    {\n        return \\$row;\n    }\n}\n");
+
+    if ($command === 'creer:module') {
+        kivo_write("$base/app/Controllers/{$studly}Controller.php", "<?php\nnamespace App\\Controllers;\n\nuse Core\\Http\\Controller;\n\nfinal class {$studly}Controller extends Controller\n{\n    public function index(): string\n    {\n        return \\$this->view('{$viewDir}.index', ['title' => '{$studly}']);\n    }\n}\n");
+        kivo_write("$base/resources/views/{$viewDir}/index.ublade.php", "@extends('layouts.app')\n@section('content')\n<x-page-header title=\"{$studly}\" subtitle=\"Module généré par KIVO Framework.\" />\n<section class=\"kivo-card\">\n  <p>Module {$studly} prêt à personnaliser.</p>\n</section>\n@endsection\n");
+    }
+
+    echo "\nRoute API à ajouter :\n";
+    echo "  \\$router->apiResource('{$table}', App\\Controllers\\{$studly}ApiController::class);\n";
+    echo "Route web à ajouter si besoin :\n";
+    echo "  \\$router->get('/{$slug}', [App\\Controllers\\{$studly}Controller::class, 'index']);\n";
+    exit(0);
+}
+
+if ($command === 'creer:composant') {
+    if (!$name) {
+        echo "Nom requis. Exemple : php bin/kivo creer:composant select-search\n";
+        exit(1);
+    }
+    $file = str_replace('-', '_', strtolower($name));
+    kivo_write("$base/resources/views/components/{$file}.ublade.php", "<div class=\"kivo-card\" data-component=\"{$name}\">\n  <strong>{{ \\$title ?? '{$name}' }}</strong>\n</div>\n");
+    exit(0);
+}
+
+if ($command === 'installer:module') {
+    if (!$name || !isset($nativeModules[$name])) {
+        echo "Module inconnu. Utilise : php bin/kivo lister:modules\n";
+        exit(1);
+    }
+    $module = $nativeModules[$name];
+    echo "Installation du module natif {$module['label']}...\n";
+    foreach ($module['entities'] as $entity) {
+        passthru(PHP_BINARY . ' ' . escapeshellarg(__FILE__) . ' creer:module ' . escapeshellarg($entity));
+    }
+    kivo_write("$base/modules/{$name}/module.json", json_encode([
+        'name' => $name,
+        'label' => $module['label'],
+        'entities' => $module['entities'],
+        'interactions' => [],
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    exit(0);
+}
+
+if ($command === 'installer:erp') {
+    foreach (['utilisateurs', 'permissions', 'rh', 'site'] as $module) {
+        passthru(PHP_BINARY . ' ' . escapeshellarg(__FILE__) . ' installer:module ' . escapeshellarg($module));
+    }
+    echo "Socle ERP installé : utilisateurs, permissions, RH, portail, site.\n";
+    exit(0);
+}
+
+echo "Commande inconnue : {$command}\n\n";
+kivo_help();
+exit(1);
