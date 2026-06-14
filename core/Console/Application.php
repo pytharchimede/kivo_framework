@@ -23,7 +23,9 @@ final class Application
         return match ($command) {
             'aide', 'help', '--help', '-h' => $this->help(),
             'installer', 'install' => $this->install(),
+            'installer:global', 'global:install' => $this->installGlobal(),
             'nouveau', 'new' => $this->newProject($arg),
+            'servir', 'serve' => $this->serve($arg),
             'creer:module', 'make:module' => $this->makeModule($arg),
             'creer:api', 'make:api' => $this->makeApi($arg),
             'creer:component', 'creer:composant', 'make:component' => $this->makeComponent($arg),
@@ -34,17 +36,29 @@ final class Application
 
     private function help(): int
     {
-        $this->line('KIVO Framework CLI');
+        $this->line('KIVO Framework');
         $this->line('');
-        $this->line('Commandes principales :');
-        $this->line('  php kivo installer');
+        $this->line('Pour démarrer :');
         $this->line('  php kivo nouveau mon_erp');
+        $this->line('  cd mon_erp');
+        $this->line('  php kivo installer');
+        $this->line('  php kivo servir');
+        $this->line('');
+        $this->line('Pour installer la commande globale :');
+        $this->line('  php kivo installer:global');
+        $this->line('');
+        $this->line('Commandes disponibles :');
+        $this->line('  php kivo aide');
+        $this->line('  php kivo installer');
+        $this->line('  php kivo installer:global');
+        $this->line('  php kivo nouveau mon_erp');
+        $this->line('  php kivo servir [port]');
         $this->line('  php kivo creer:module Personnel');
         $this->line('  php kivo creer:api Personnel');
         $this->line('  php kivo creer:composant select-search');
         $this->line('  php kivo lister:modules');
         $this->line('');
-        $this->line('Alias anglais disponibles : install, new, make:module, make:api, make:component.');
+        $this->line('Alias anglais : help, install, global:install, new, serve, make:module, make:api, make:component.');
         return 0;
     }
 
@@ -61,7 +75,7 @@ final class Application
                 $this->writeEnvExample($examplePath);
             }
             copy($examplePath, $envPath);
-            $this->line('✓ Fichier .env créé');
+            $this->line('✓ Fichier .env créé depuis .env.example');
         } else {
             $this->line('✓ Fichier .env déjà présent');
         }
@@ -69,21 +83,79 @@ final class Application
         $env = $this->parseEnv($envPath);
         $env['APP_KEY'] = $env['APP_KEY'] ?: 'base64:' . base64_encode(random_bytes(32));
         $env['APP_NAME'] = $this->ask('Nom du projet', $env['APP_NAME'] ?: 'Kivo ERP');
-        $env['APP_URL'] = $this->ask('URL locale', $env['APP_URL'] ?: 'http://localhost/kivo_framework/public');
+        $env['APP_COMPANY'] = $this->ask('Nom de l’entreprise', $env['APP_COMPANY'] ?: 'Mon entreprise');
+        $env['APP_TEMPLATE'] = $this->ask('Template (enterprise/transit/rh/vide)', $env['APP_TEMPLATE'] ?: 'enterprise');
+        $env['APP_URL'] = $this->ask('URL locale', $env['APP_URL'] ?: 'http://localhost:8080');
         $env['DB_HOST'] = $this->ask('Hôte MySQL', $env['DB_HOST'] ?: '127.0.0.1');
         $env['DB_PORT'] = $this->ask('Port MySQL', $env['DB_PORT'] ?: '3306');
         $env['DB_DATABASE'] = $this->ask('Base de données', $env['DB_DATABASE'] ?: $this->slug($env['APP_NAME']));
         $env['DB_USERNAME'] = $this->ask('Utilisateur MySQL', $env['DB_USERNAME'] ?: 'root');
         $env['DB_PASSWORD'] = $this->askHiddenFallback('Mot de passe MySQL', $env['DB_PASSWORD'] ?? '');
 
+        $createAdmin = strtolower($this->ask('Créer un administrateur ? (oui/non)', 'oui'));
+        if (in_array($createAdmin, ['oui', 'o', 'yes', 'y', '1'], true)) {
+            $env['ADMIN_NAME'] = $this->ask('Nom admin', $env['ADMIN_NAME'] ?: 'Administrateur');
+            $env['ADMIN_EMAIL'] = $this->ask('Email admin', $env['ADMIN_EMAIL'] ?: 'admin@demo.local');
+            $env['ADMIN_PASSWORD'] = $this->askHiddenFallback('Mot de passe admin', $env['ADMIN_PASSWORD'] ?: 'admin1234');
+        }
+
         $this->writeEnv($envPath, $env);
-        $this->line('✓ Configuration .env enregistrée');
+        $this->writeKivoJson($env);
+        $this->line('✓ Configuration enregistrée (.env + kivo.json)');
 
         $this->ensureStorage();
         $this->line('✓ Dossiers storage prêts');
 
         $this->tryDatabaseSetup($env);
-        $this->line('Installation terminée. Lance ensuite : php -S localhost:8080 -t public');
+        $this->line('');
+        $this->line('Installation terminée. Lance maintenant :');
+        $this->line('  php kivo servir');
+        return 0;
+    }
+
+    private function installGlobal(): int
+    {
+        $isWindows = PHP_OS_FAMILY === 'Windows';
+        if ($isWindows) {
+            $home = getenv('LOCALAPPDATA') ?: ((getenv('USERPROFILE') ?: $this->basePath) . DIRECTORY_SEPARATOR . 'AppData' . DIRECTORY_SEPARATOR . 'Local');
+            $dir = rtrim($home, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'Kivo';
+            if (! is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
+            $target = $dir . DIRECTORY_SEPARATOR . 'kivo.bat';
+            $root = $this->basePath . DIRECTORY_SEPARATOR . 'kivo';
+            $this->writeRaw($target, "@echo off\r\nphp \"{$root}\" %*\r\n");
+            $this->line('✓ Lanceur global créé : ' . $target);
+
+            $path = getenv('PATH') ?: '';
+            if (! str_contains(strtolower($path), strtolower($dir))) {
+                $command = 'setx PATH "' . $path . PATH_SEPARATOR . $dir . '"';
+                $this->line('Ajout au PATH utilisateur...');
+                @system($command, $code);
+                if (($code ?? 1) === 0) {
+                    $this->line('✓ PATH utilisateur mis à jour. Ferme puis rouvre PowerShell.');
+                } else {
+                    $this->line('⚠ Ajout automatique au PATH non confirmé. Ajoute manuellement ce dossier : ' . $dir);
+                }
+            } else {
+                $this->line('✓ Le dossier KIVO est déjà dans le PATH.');
+            }
+
+            $this->line('Après réouverture de PowerShell : kivo aide');
+            return 0;
+        }
+
+        $home = getenv('HOME') ?: $this->basePath;
+        $dir = rtrim($home, DIRECTORY_SEPARATOR) . '/.local/bin';
+        if (! is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $target = $dir . '/kivo';
+        $root = $this->basePath . '/kivo';
+        $this->writeRaw($target, "#!/usr/bin/env sh\nphp \"{$root}\" \"$@\"\n");
+        @chmod($target, 0755);
+        $this->line('✓ Lanceur global créé : ' . $target);
+        $this->line('Assure-toi que ~/.local/bin est dans le PATH, puis lance : kivo aide');
         return 0;
     }
 
@@ -98,9 +170,23 @@ final class Application
             $this->error("Le dossier existe déjà : {$target}");
             return 1;
         }
-        $this->copyDirectory($this->basePath, $target, ['.git', 'vendor', 'storage/cache', 'storage/logs']);
+        $this->copyDirectory($this->basePath, $target, ['.git', 'vendor', 'storage/cache', 'storage/logs', '.env', 'kivo.json', $name]);
         $this->line("✓ Projet créé : {$target}");
         $this->line("Suite : cd {$name} puis php kivo installer");
+        return 0;
+    }
+
+    private function serve(?string $port): int
+    {
+        $port = $port ?: '8080';
+        $public = $this->basePath . DIRECTORY_SEPARATOR . 'public';
+        if (! is_dir($public)) {
+            $this->error('Dossier public introuvable.');
+            return 1;
+        }
+        $this->line("Serveur KIVO : http://localhost:{$port}");
+        $this->line('Arrêt : Ctrl+C');
+        passthru(PHP_BINARY . ' -S localhost:' . escapeshellarg($port) . ' -t ' . escapeshellarg($public));
         return 0;
     }
 
@@ -186,10 +272,28 @@ final class Application
             $pdo->exec("USE `{$db}`");
             $this->line('✓ Base de données prête : ' . $db);
             $this->runSqlMigrations($pdo);
+            $this->seedAdmin($pdo, $env);
         } catch (Throwable $e) {
             $this->line('⚠ Connexion/création BDD impossible : ' . $e->getMessage());
             $this->line('Crée la base dans phpMyAdmin/cPanel puis relance : php kivo installer');
         }
+    }
+
+    private function seedAdmin(PDO $pdo, array $env): void
+    {
+        $email = trim((string) ($env['ADMIN_EMAIL'] ?? ''));
+        $password = (string) ($env['ADMIN_PASSWORD'] ?? '');
+        if ($email === '' || $password === '') {
+            $this->line('ℹ Aucun admin créé : email ou mot de passe absent.');
+            return;
+        }
+        $stmt = $pdo->prepare('INSERT IGNORE INTO users (`name`, `email`, `password`) VALUES (?, ?, ?)');
+        $stmt->execute([
+            $env['ADMIN_NAME'] ?: 'Administrateur',
+            $email,
+            password_hash($password, PASSWORD_DEFAULT),
+        ]);
+        $this->line('✓ Compte admin prêt : ' . $email);
     }
 
     private function runSqlMigrations(PDO $pdo): void
@@ -211,8 +315,10 @@ final class Application
     private function parseEnv(string $path): array
     {
         $defaults = [
-            'APP_NAME' => 'Kivo ERP', 'APP_ENV' => 'local', 'APP_DEBUG' => 'true', 'APP_KEY' => '', 'APP_URL' => '',
+            'APP_NAME' => 'Kivo ERP', 'APP_COMPANY' => 'Mon entreprise', 'APP_TEMPLATE' => 'enterprise',
+            'APP_ENV' => 'local', 'APP_DEBUG' => 'true', 'APP_KEY' => '', 'APP_URL' => '',
             'DB_DRIVER' => 'mysql', 'DB_HOST' => '127.0.0.1', 'DB_PORT' => '3306', 'DB_DATABASE' => 'kivo', 'DB_USERNAME' => 'root', 'DB_PASSWORD' => '',
+            'ADMIN_NAME' => 'Administrateur', 'ADMIN_EMAIL' => 'admin@demo.local', 'ADMIN_PASSWORD' => '',
         ];
         if (! is_file($path)) {
             return $defaults;
@@ -230,13 +336,29 @@ final class Application
 
     private function writeEnvExample(string $path): void
     {
-        $this->writeRaw($path, "APP_NAME=Kivo ERP\nAPP_ENV=local\nAPP_DEBUG=true\nAPP_KEY=\nAPP_URL=http://localhost/kivo_framework/public\n\nDB_DRIVER=mysql\nDB_HOST=127.0.0.1\nDB_PORT=3306\nDB_DATABASE=kivo\nDB_USERNAME=root\nDB_PASSWORD=\n");
+        $this->writeRaw($path, "APP_NAME=Kivo ERP\nAPP_COMPANY=Mon entreprise\nAPP_TEMPLATE=enterprise\nAPP_ENV=local\nAPP_DEBUG=true\nAPP_KEY=\nAPP_URL=http://localhost:8080\n\nDB_DRIVER=mysql\nDB_HOST=127.0.0.1\nDB_PORT=3306\nDB_DATABASE=kivo\nDB_USERNAME=root\nDB_PASSWORD=\n\nADMIN_NAME=Administrateur\nADMIN_EMAIL=admin@demo.local\nADMIN_PASSWORD=\n");
     }
 
     private function writeEnv(string $path, array $env): void
     {
-        $content = "APP_NAME=\"{$env['APP_NAME']}\"\nAPP_ENV={$env['APP_ENV']}\nAPP_DEBUG={$env['APP_DEBUG']}\nAPP_KEY={$env['APP_KEY']}\nAPP_URL={$env['APP_URL']}\n\nDB_DRIVER={$env['DB_DRIVER']}\nDB_HOST={$env['DB_HOST']}\nDB_PORT={$env['DB_PORT']}\nDB_DATABASE={$env['DB_DATABASE']}\nDB_USERNAME={$env['DB_USERNAME']}\nDB_PASSWORD={$env['DB_PASSWORD']}\n";
+        $content = "APP_NAME=\"{$env['APP_NAME']}\"\nAPP_COMPANY=\"{$env['APP_COMPANY']}\"\nAPP_TEMPLATE={$env['APP_TEMPLATE']}\nAPP_ENV={$env['APP_ENV']}\nAPP_DEBUG={$env['APP_DEBUG']}\nAPP_KEY={$env['APP_KEY']}\nAPP_URL={$env['APP_URL']}\n\nDB_DRIVER={$env['DB_DRIVER']}\nDB_HOST={$env['DB_HOST']}\nDB_PORT={$env['DB_PORT']}\nDB_DATABASE={$env['DB_DATABASE']}\nDB_USERNAME={$env['DB_USERNAME']}\nDB_PASSWORD={$env['DB_PASSWORD']}\n\nADMIN_NAME=\"{$env['ADMIN_NAME']}\"\nADMIN_EMAIL={$env['ADMIN_EMAIL']}\nADMIN_PASSWORD={$env['ADMIN_PASSWORD']}\n";
         $this->writeRaw($path, $content);
+    }
+
+    private function writeKivoJson(array $env): void
+    {
+        $path = $this->basePath . '/kivo.json';
+        if (is_file($path)) {
+            return;
+        }
+        $data = [
+            'name' => $env['APP_NAME'],
+            'company' => $env['APP_COMPANY'],
+            'template' => $env['APP_TEMPLATE'],
+            'modules' => ['utilisateurs', 'permissions', 'rh', 'site'],
+            'api_mobile' => true,
+        ];
+        $this->writeRaw($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL);
     }
 
     private function ask(string $label, string $default = ''): string
